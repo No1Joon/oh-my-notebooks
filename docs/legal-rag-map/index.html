@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>판결 임베딩 3D 지도</title>
+<meta name="description" content="판결 16,800건의 bge-m3 임베딩을 3차원으로 줄여, 같은 법령을 참조한 판결이 모이는지 돌려 보는 지도">
+<style>
+  :root {
+    --bg: #f5f5f7;
+    --label: #1d1d1f;
+    --label-2: #515154;
+    --label-3: #6e6e73;
+    --glass: rgba(255, 255, 255, 0.72);
+    --glass-border: rgba(0, 0, 0, 0.08);
+    --fill: rgba(118, 118, 128, 0.12);
+    --fill-selected: #ffffff;
+    --accent: #0066cc;
+    --tip-bg: rgba(29, 29, 31, 0.92);
+    --tip-fg: #ffffff;
+    --font: -apple-system, BlinkMacSystemFont, "SF Pro Text",
+      "Apple SD Gothic Neo", "Pretendard", system-ui, sans-serif;
+    color-scheme: light dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #000000;
+      --label: #f5f5f7;
+      --label-2: #c7c7cc;
+      --label-3: #98989d;
+      --glass: rgba(28, 28, 30, 0.72);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --fill: rgba(118, 118, 128, 0.24);
+      --fill-selected: #636366;
+      --accent: #4da3ff;
+      --tip-bg: rgba(242, 242, 247, 0.94);
+      --tip-fg: #1d1d1f;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; height: 100%; overflow: hidden;
+    background: var(--bg); color: var(--label);
+    font-family: var(--font); font-size: 17px; line-height: 1.4;
+    -webkit-font-smoothing: antialiased;
+  }
+  #stage { position: fixed; inset: 0; touch-action: none; }
+  #stage canvas { display: block; }
+
+  .panel {
+    position: fixed; top: 16px; left: 16px;
+    width: 340px; max-height: calc(100% - 96px);
+    overflow-y: auto; padding: 20px;
+    background: var(--glass);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+  }
+  @media (prefers-reduced-transparency: reduce) {
+    .panel { background: var(--bg); backdrop-filter: none;
+      -webkit-backdrop-filter: none; }
+  }
+  .panel-head { display: flex; align-items: flex-start; gap: 12px; }
+  h1 { font-size: 20px; line-height: 25px; font-weight: 600;
+    margin: 0; flex: 1; }
+  .intro { font-size: 16px; line-height: 1.5; color: var(--label-2);
+    margin: 8px 0 0; }
+  .body > * + * { margin-top: 20px; }
+  .body { margin-top: 20px; }
+  h2 { font-size: 15px; line-height: 20px; font-weight: 600;
+    color: var(--label-2); margin: 0 0 8px; }
+
+  button { font: inherit; color: inherit; }
+  :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+  .segmented {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 2px;
+    padding: 2px; border-radius: 10px; background: var(--fill);
+  }
+  .segmented button {
+    min-height: 44px; border: 0; border-radius: 8px;
+    background: transparent; font-size: 15px; font-weight: 500;
+    cursor: pointer;
+  }
+  .segmented button[aria-pressed="true"] {
+    background: var(--fill-selected); font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  }
+
+  .switch-row {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; min-height: 44px; font-size: 16px; cursor: pointer;
+  }
+  .switch-row input {
+    appearance: none; -webkit-appearance: none; flex: none;
+    width: 51px; height: 31px; border-radius: 16px; margin: 0;
+    background: var(--fill); position: relative; cursor: pointer;
+    transition: background 0.2s;
+  }
+  .switch-row input::after {
+    content: ""; position: absolute; top: 2px; left: 2px;
+    width: 27px; height: 27px; border-radius: 50%; background: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25); transition: left 0.2s;
+  }
+  .switch-row input:checked { background: #34c759; }
+  .switch-row input:checked::after { left: 22px; }
+
+  .legend { list-style: none; margin: 0; padding: 0; }
+  .legend button {
+    width: 100%; min-height: 44px; display: flex; align-items: center;
+    gap: 12px; padding: 0 4px; border: 0; background: none;
+    font-size: 16px; text-align: left; cursor: pointer; border-radius: 8px;
+  }
+  .legend button:hover { background: var(--fill); }
+  .swatch {
+    flex: none; width: 16px; height: 16px; border-radius: 50%;
+    border: 2px solid var(--sw);
+    background: var(--sw);
+  }
+  .legend button[aria-pressed="false"] .swatch { background: transparent; }
+  .legend button[aria-pressed="false"] .name { color: var(--label-3);
+    text-decoration: line-through; }
+  .name { flex: 1; }
+  .count { color: var(--label-2); font-variant-numeric: tabular-nums; }
+
+  .row-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .text-btn {
+    min-height: 44px; padding: 0 12px; border: 0; border-radius: 10px;
+    background: var(--fill); font-size: 15px; font-weight: 500;
+    cursor: pointer;
+  }
+  .status { font-size: 16px; color: var(--label-2);
+    font-variant-numeric: tabular-nums; }
+
+  .collapse-btn {
+    display: none; flex: none; min-width: 44px; min-height: 44px;
+    border: 0; border-radius: 22px; background: var(--fill);
+    font-size: 15px; font-weight: 500; padding: 0 14px; cursor: pointer;
+  }
+
+  #tip {
+    position: fixed; pointer-events: none; z-index: 5;
+    padding: 8px 12px; border-radius: 10px;
+    background: var(--tip-bg); color: var(--tip-fg);
+    font-size: 15px; line-height: 20px; white-space: nowrap;
+    opacity: 0; transform: translate(-50%, calc(-100% - 14px));
+  }
+  #tip.on { opacity: 1; }
+
+  footer {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+    font-size: 15px; line-height: 20px; color: var(--label-2);
+    text-align: center; pointer-events: none;
+    text-shadow: 0 0 6px var(--bg), 0 0 2px var(--bg);
+  }
+
+  #msg {
+    position: fixed; inset: 0; display: grid; place-items: center;
+    font-size: 17px; color: var(--label-2); padding: 16px;
+    text-align: center;
+  }
+
+  @media (max-width: 700px) {
+    .panel {
+      top: 12px; left: 12px; right: 12px; width: auto;
+      max-height: calc(100% - 140px); padding: 16px;
+    }
+    .collapse-btn { display: block; }
+    .panel.collapsed .body, .panel.collapsed .intro { display: none; }
+    footer { font-size: 15px; }
+  }
+</style>
+</head>
+<body>
+<div id="stage" aria-label="판결 임베딩 3D 산점도. 끌어서 돌리고 두 손가락이나 휠로 확대합니다."></div>
+<div id="msg">점 16,800개를 불러오는 중입니다</div>
+
+<aside class="panel" id="panel">
+  <div class="panel-head">
+    <h1>판결 임베딩 3D 지도</h1>
+    <button class="collapse-btn" id="collapse" aria-expanded="true"
+      aria-controls="panel-body">접기</button>
+  </div>
+  <p class="intro">판결 16,800건의 bge-m3 임베딩을 UMAP 으로 3차원에
+    놓았습니다. 같은 법령을 참조한 판결이 모이는지 끌어서 돌려 보세요.</p>
+  <div class="body" id="panel-body">
+    <section>
+      <h2 id="mode-label">색 기준</h2>
+      <div class="segmented" role="group" aria-labelledby="mode-label">
+        <button type="button" data-mode="law" aria-pressed="true">주 법령</button>
+        <button type="button" data-mode="class" aria-pressed="false">사건 유형</button>
+      </div>
+    </section>
+    <label class="switch-row">
+      <span>참조조문 없는 판결 보이기</span>
+      <input type="checkbox" id="show-none" role="switch">
+    </label>
+    <section>
+      <h2 id="legend-label">범례</h2>
+      <ul class="legend" id="legend" aria-labelledby="legend-label"></ul>
+    </section>
+    <div class="row-actions">
+      <button type="button" class="text-btn" id="all-on">모두 켜기</button>
+      <button type="button" class="text-btn" id="all-off">모두 끄기</button>
+      <button type="button" class="text-btn" id="reset">시점 되돌리기</button>
+    </div>
+    <p class="status" id="status" aria-live="polite"></p>
+  </div>
+</aside>
+
+<div id="tip" role="status"></div>
+
+<footer>이 페이지는 과학기술정보통신부와 한국지능정보사회진흥원의 사업결과로 구축된
+  AI Hub 판결서 익명처리 데이터를 활용했습니다. 좌표는 bge-m3 임베딩을 UMAP 으로
+  3차원으로 줄인 값이며 판결문 원문은 포함하지 않습니다.</footer>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+// 커스텀 셰이더가 색을 그대로 내보내므로 hex 값을 선형으로 바꾸지 않는다
+THREE.ColorManagement.enabled = false;
+
+const LAW_COLORS = ["#2c3e66", "#c0392b", "#e0a100", "#1e8449",
+  "#8e44ad", "#16a3b5", "#e67e22", "#d63384"];
+const CLASS_COLORS = ["#2c3e66", "#c0392b", "#e0a100", "#1e8449",
+  "#8e44ad", "#16a3b5", "#e67e22", "#d63384", "#7d8c2e", "#8d6e63"];
+const GRAY = "#c9ccd1";
+const DARK = matchMedia("(prefers-color-scheme: dark)");
+const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
+// 어두운 배경에서는 어두운 색이 묻히지 않게 명도를 끌어올린다
+const hsl = {};
+function tone(hex) {
+  if (!DARK.matches) return hex;
+  if (hex === GRAY) return "#7c7c82";
+  const c = new THREE.Color(hex).getHSL(hsl);
+  return "#" + new THREE.Color().setHSL(hsl.h, hsl.s,
+    Math.max(hsl.l, 0.62)).getHexString();
+}
+
+const $ = (id) => document.getElementById(id);
+const fmt = (n) => n.toLocaleString("ko-KR");
+
+let data;
+try {
+  const res = await fetch("points.json");
+  if (!res.ok) throw new Error(res.status);
+  data = await res.json();
+} catch (e) {
+  $("msg").textContent = "좌표 파일을 불러오지 못했습니다. 페이지를 새로 고치세요.";
+  throw e;
+}
+$("msg").remove();
+
+const P = data.points;
+const N = P.length;
+const lawName = (i) => i >= 0 ? data.laws[i] : data.law_codes[String(i)];
+
+// 범례 항목: 주 법령 8종 + 기타 법령 / 사건 유형 10종
+const LEGENDS = {
+  law: [...data.laws.map((name, i) => ({ key: i, name, color: LAW_COLORS[i] })),
+        { key: -1, name: data.law_codes["-1"], color: GRAY }],
+  class: data.classes.map((name, i) => ({ key: i, name, color: CLASS_COLORS[i] })),
+};
+const state = {
+  mode: "law",
+  on: { law: new Set(LEGENDS.law.map((d) => d.key)),
+        class: new Set(LEGENDS.class.map((d) => d.key)) },
+  showNone: false,
+};
+
+// 중심은 축마다 중앙값, 범위는 1~99% 분위로 잡는다
+function quantile(sorted, q) { return sorted[Math.floor((sorted.length - 1) * q)]; }
+const center = new THREE.Vector3();
+let radius = 0;
+for (let a = 0; a < 3; a++) {
+  const xs = P.map((p) => p[a]).sort((x, y) => x - y);
+  const mid = quantile(xs, 0.5);
+  center.setComponent(a, mid);
+  radius = Math.max(radius, mid - quantile(xs, 0.01),
+    quantile(xs, 0.99) - mid);
+}
+
+const pos = new Float32Array(N * 3);
+const col = new Float32Array(N * 3);
+const vis = new Float32Array(N);
+P.forEach((p, i) => { pos.set([p[0], p[1], p[2]], i * 3); });
+
+const geom = new THREE.BufferGeometry();
+geom.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+geom.setAttribute("color", new THREE.BufferAttribute(col, 3));
+geom.setAttribute("vis", new THREE.BufferAttribute(vis, 1));
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+$("stage").appendChild(renderer.domElement);
+
+const camera = new THREE.PerspectiveCamera(45, 1, radius / 100, radius * 100);
+const DIR = new THREE.Vector3(1, 0.6, 1.4).normalize();
+// 세로·가로 시야각 가운데 좁은 쪽에 구름이 다 들어가게 거리를 잡는다
+function homeDistance() {
+  const v = THREE.MathUtils.degToRad(camera.fov);
+  const h = 2 * Math.atan(Math.tan(v / 2) * camera.aspect);
+  return (radius * 0.75) / Math.sin(Math.min(v, h) / 2);
+}
+
+const mat = new THREE.ShaderMaterial({
+  uniforms: { uSize: { value: 1 }, uScale: { value: 1 } },
+  vertexShader: `
+    attribute vec3 color; attribute float vis;
+    uniform float uSize; uniform float uScale;
+    varying vec3 vColor;
+    void main() {
+      vColor = color;
+      vec4 mv = modelViewMatrix * vec4(position, 1.0);
+      gl_Position = projectionMatrix * mv;
+      gl_PointSize = vis > 0.5 ? max(2.0, uSize * uScale / -mv.z) : 0.0;
+    }`,
+  fragmentShader: `
+    varying vec3 vColor;
+    void main() {
+      vec2 d = gl_PointCoord - 0.5;
+      if (dot(d, d) > 0.25) discard;
+      gl_FragColor = vec4(vColor, 1.0);
+    }`,
+});
+mat.uniforms.uSize.value = radius * 0.012;
+const points = new THREE.Points(geom, mat);
+const scene = new THREE.Scene();
+scene.add(points);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = !REDUCED;
+function resetView() {
+  camera.position.copy(center).addScaledVector(DIR, homeDistance());
+  controls.target.copy(center);
+  controls.update();
+}
+function resize() {
+  const w = innerWidth, h = innerHeight;
+  renderer.setSize(w, h);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  const fov = THREE.MathUtils.degToRad(camera.fov);
+  mat.uniforms.uScale.value = (h * renderer.getPixelRatio()) / 2 / Math.tan(fov / 2);
+}
+addEventListener("resize", resize);
+resize();
+resetView();
+
+// 색·표시 여부 갱신
+const tmp = new THREE.Color();
+function refresh() {
+  const on = state.on[state.mode];
+  const colors = Object.fromEntries(LEGENDS[state.mode]
+    .map((d) => [d.key, tone(d.color)]));
+  let shown = 0;
+  for (let i = 0; i < N; i++) {
+    const law = P[i][4];
+    const key = state.mode === "law" ? law : P[i][3];
+    const none = law === -2;
+    const visible = none ? state.showNone && (state.mode === "class" ? on.has(key) : true)
+      : on.has(key);
+    vis[i] = visible ? 1 : 0;
+    shown += visible;
+    tmp.set(none && state.mode === "law" ? tone(GRAY) : colors[key]);
+    if (none && state.mode === "law") tmp.offsetHSL(0, 0, DARK.matches ? -0.12 : 0.08);
+    col.set([tmp.r, tmp.g, tmp.b], i * 3);
+  }
+  geom.attributes.color.needsUpdate = true;
+  geom.attributes.vis.needsUpdate = true;
+  $("status").textContent = `보이는 판결 ${fmt(shown)}건 / ${fmt(N)}건`;
+  renderLegend();
+}
+
+function countFor(mode, key) {
+  let c = 0;
+  for (const p of P) {
+    if (p[4] === -2 && !state.showNone) continue;
+    if ((mode === "law" ? p[4] : p[3]) === key) c++;
+  }
+  return c;
+}
+
+function renderLegend() {
+  const ul = $("legend");
+  ul.replaceChildren(...LEGENDS[state.mode].map((d) => {
+    const li = document.createElement("li");
+    const b = document.createElement("button");
+    b.type = "button";
+    const pressed = state.on[state.mode].has(d.key);
+    b.setAttribute("aria-pressed", String(pressed));
+    b.style.setProperty("--sw", tone(d.color));
+    b.innerHTML = `<span class="swatch" aria-hidden="true"></span>
+      <span class="name"></span><span class="count"></span>`;
+    b.querySelector(".name").textContent = d.name;
+    b.querySelector(".count").textContent = fmt(countFor(state.mode, d.key));
+    b.addEventListener("click", () => {
+      const s = state.on[state.mode];
+      s.has(d.key) ? s.delete(d.key) : s.add(d.key);
+      refresh();
+      ul.children[LEGENDS[state.mode].indexOf(d)]?.querySelector("button").focus();
+    });
+    li.appendChild(b);
+    return li;
+  }));
+}
+
+document.querySelectorAll(".segmented button").forEach((b) => {
+  b.addEventListener("click", () => {
+    state.mode = b.dataset.mode;
+    document.querySelectorAll(".segmented button").forEach((x) =>
+      x.setAttribute("aria-pressed", String(x === b)));
+    refresh();
+  });
+});
+$("show-none").addEventListener("change", (e) => {
+  state.showNone = e.target.checked; refresh();
+});
+$("all-on").addEventListener("click", () => {
+  state.on[state.mode] = new Set(LEGENDS[state.mode].map((d) => d.key)); refresh();
+});
+$("all-off").addEventListener("click", () => {
+  state.on[state.mode].clear(); refresh();
+});
+$("reset").addEventListener("click", resetView);
+$("collapse").addEventListener("click", () => {
+  const panel = $("panel");
+  const collapsed = panel.classList.toggle("collapsed");
+  $("collapse").textContent = collapsed ? "펼치기" : "접기";
+  $("collapse").setAttribute("aria-expanded", String(!collapsed));
+});
+if (matchMedia("(max-width: 700px)").matches) $("collapse").click();
+DARK.addEventListener("change", refresh);
+
+// 호버: 가장 가까운 보이는 점 하나의 사건 유형·주 법령만 보인다
+const ray = new THREE.Raycaster();
+const ndc = new THREE.Vector2();
+const tip = $("tip");
+let pending = null;
+function pick(x, y) {
+  ndc.set((x / innerWidth) * 2 - 1, -(y / innerHeight) * 2 + 1);
+  ray.setFromCamera(ndc, camera);
+  const dist = camera.position.distanceTo(controls.target);
+  ray.params.Points.threshold = dist * 0.008;
+  const hit = ray.intersectObject(points)
+    .filter((h) => vis[h.index] > 0.5)
+    .sort((a, b) => a.distanceToRay - b.distanceToRay)[0];
+  if (!hit) { tip.classList.remove("on"); return; }
+  const p = P[hit.index];
+  tip.textContent = `${data.classes[p[3]]} · ${lawName(p[4])}`;
+  tip.style.left = `${x}px`;
+  tip.style.top = `${y}px`;
+  tip.classList.add("on");
+}
+const el = renderer.domElement;
+el.addEventListener("pointermove", (e) => {
+  if (e.pointerType !== "mouse" || e.buttons) { tip.classList.remove("on"); return; }
+  pending = [e.clientX, e.clientY];
+});
+// 터치는 손을 떼면 pointerleave 가 따라오므로 마우스일 때만 지운다
+el.addEventListener("pointerleave", (e) => {
+  if (e.pointerType === "mouse") tip.classList.remove("on");
+});
+// 터치는 끌지 않고 톡 누른 자리만 집는다
+let down = null;
+el.addEventListener("pointerdown", (e) => { down = [e.clientX, e.clientY]; });
+el.addEventListener("pointerup", (e) => {
+  if (e.pointerType === "mouse" || !down) return;
+  if (Math.hypot(e.clientX - down[0], e.clientY - down[1]) < 8) pick(e.clientX, e.clientY);
+  else tip.classList.remove("on");
+});
+
+refresh();
+renderer.setAnimationLoop(() => {
+  if (pending) { pick(...pending); pending = null; }
+  controls.update();
+  renderer.render(scene, camera);
+});
+</script>
+</body>
+</html>

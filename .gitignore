@@ -3,6 +3,7 @@ CLAUDE.md
 scripts/
 PLAN.md
 RESULTS.md
+temp-memory.md
 *_output.ipynb
 *.wav
 *.mp3

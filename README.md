@@ -11,6 +11,7 @@
 | [한국어 STT 실측 비교](notebooks/korean_stt_comparison.ipynb) | Whisper · faster-whisper · WhisperX · CrisperWhisper 2.0 을 같은 음성으로 돌려 정확도·속도·라이선스를 비교합니다. 한국어는 직접 올린 음성으로 잽니다. | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/No1Joon/oh-my-notebooks/blob/main/notebooks/korean_stt_comparison.ipynb) |
 | [ResNet degradation 재현](notebooks/resnet_degradation.ipynb) | 잔차 연결이 없으면 56층이 20층보다 나빠지고(degradation), 잔차 연결을 넣으면 뒤집히는지 CIFAR-10 으로 직접 돌려 확인합니다. | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/No1Joon/oh-my-notebooks/blob/main/notebooks/resnet_degradation.ipynb) |
 | [어텐션 KV 캐시 대 선형 순환](notebooks/mamba3_inference_cost.ipynb) | 시퀀스가 길어질 때 토큰 1개를 뽑는 시간과 들고 있어야 하는 크기가 어떻게 달라지는지 최소 구현 두 개로 잽니다. | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/No1Joon/oh-my-notebooks/blob/main/notebooks/mamba3_inference_cost.ipynb) |
+| [초간단 RAG 1탄 — 판결서](notebooks/legal-rag-01.ipynb) | AI Hub 판결서 익명처리 데이터에 라벨을 적용해 가명 코퍼스를 만들고, bge-m3 검색과 Qwen3-4B 생성으로 쟁점에 맞는 참고 판결 3건과 가상 판결 이유 초안을 받습니다. 데이터는 AI Hub 에서 직접 신청해 받습니다. | 로컬 Jupyter (Colab 불가) |
 
 ## 쓰는 법
 

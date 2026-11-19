@@ -8,6 +8,7 @@
 
 | 노트북 | 내용 | 열기 |
 |---|---|---|
+| [난수 생성기 직접 구현과 예측](notebooks/rng_from_scratch.ipynb) | LCG, RANDU, Mersenne Twister, ChaCha20을 표준 라이브러리로 구현하고, 통계 검정과 MT19937의 내부 상태를 저장한 뒤 출력이 재생되는지 확인합니다. | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/No1Joon/oh-my-notebooks/blob/main/notebooks/rng_from_scratch.ipynb) |
 | [LLM VRAM 계산과 T4 실측](notebooks/llm_vram_calculator.ipynb) | 가중치와 KV 캐시 공식을 Hugging Face 저장 용량과 대조하고, Qwen2.5를 T4에서 올려 공식과 실제 할당을 비교합니다. | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/No1Joon/oh-my-notebooks/blob/main/notebooks/llm_vram_calculator.ipynb) |
 | [한국어 STT 실측 비교](notebooks/korean_stt_comparison.ipynb) | Whisper · faster-whisper · WhisperX · CrisperWhisper 2.0 을 같은 음성으로 돌려 정확도·속도·라이선스를 비교합니다. 한국어는 직접 올린 음성으로 잽니다. | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/No1Joon/oh-my-notebooks/blob/main/notebooks/korean_stt_comparison.ipynb) |
 | [ResNet degradation 재현](notebooks/resnet_degradation.ipynb) | 잔차 연결이 없으면 56층이 20층보다 나빠지고(degradation), 잔차 연결을 넣으면 뒤집히는지 CIFAR-10 으로 직접 돌려 확인합니다. | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/No1Joon/oh-my-notebooks/blob/main/notebooks/resnet_degradation.ipynb) |

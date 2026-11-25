@@ -8,6 +8,7 @@
 
 | 노트북 | 내용 | 열기 |
 |---|---|---|
+| [Claude 토크나이저, 한국어와 영어 토큰 수 비교](notebooks/claude_tokenizer_korean.ipynb) | 같은 뜻의 한영 문단과 여러 문서 형식에서 모델별 입력 토큰 수를 재고, 100만 자당 비용을 추정합니다. | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/No1Joon/oh-my-notebooks/blob/main/notebooks/claude_tokenizer_korean.ipynb) |
 | [판결문 LoRA와 RAG의 조문 인용 비교](notebooks/legal_citation_lora_rag.ipynb) | 같은 판시사항에 기본 모델, LoRA, RAG가 답한 조문을 원 판결의 참조조문과 대조합니다. | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/No1Joon/oh-my-notebooks/blob/main/notebooks/legal_citation_lora_rag.ipynb) |
 | [ResNet 깊이와 잔차 연결](notebooks/resnet_depth_curves.ipynb) | CIFAR-10 부분집합에서 20층과 56층의 일반망 및 잔차망 학습 곡선을 비교합니다. | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/No1Joon/oh-my-notebooks/blob/main/notebooks/resnet_depth_curves.ipynb) |
 | [한국어 Whisper 실행기 비교](notebooks/korean_asr_runtime_benchmark.ipynb) | 같은 한국어 공개 음성에서 네 구현의 WER, CER와 실시간 배율을 측정합니다. | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/No1Joon/oh-my-notebooks/blob/main/notebooks/korean_asr_runtime_benchmark.ipynb) |

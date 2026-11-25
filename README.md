@@ -8,6 +8,7 @@
 
 | 노트북 | 내용 | 열기 |
 |---|---|---|
+| [판결문 LoRA와 RAG의 조문 인용 비교](notebooks/legal_citation_lora_rag.ipynb) | 같은 판시사항에 기본 모델, LoRA, RAG가 답한 조문을 원 판결의 참조조문과 대조합니다. | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/No1Joon/oh-my-notebooks/blob/main/notebooks/legal_citation_lora_rag.ipynb) |
 | [ResNet 깊이와 잔차 연결](notebooks/resnet_depth_curves.ipynb) | CIFAR-10 부분집합에서 20층과 56층의 일반망 및 잔차망 학습 곡선을 비교합니다. | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/No1Joon/oh-my-notebooks/blob/main/notebooks/resnet_depth_curves.ipynb) |
 | [한국어 Whisper 실행기 비교](notebooks/korean_asr_runtime_benchmark.ipynb) | 같은 한국어 공개 음성에서 네 구현의 WER, CER와 실시간 배율을 측정합니다. | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/No1Joon/oh-my-notebooks/blob/main/notebooks/korean_asr_runtime_benchmark.ipynb) |
 | [판결문 RAG 검색 평가](notebooks/legal_rag_retrieval.ipynb) | 공개 판례 1,000건의 판시사항으로 원 판결을 검색하고 단어와 글자 TF-IDF의 Recall@k를 비교합니다. | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/No1Joon/oh-my-notebooks/blob/main/notebooks/legal_rag_retrieval.ipynb) |

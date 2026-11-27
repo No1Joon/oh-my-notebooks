@@ -8,6 +8,7 @@
 
 | 노트북 | 내용 | 열기 |
 |---|---|---|
+| [로또 6/45 모의추첨](notebooks/lotto_645_sampling.ipynb) | 독립 게임을 묶어 1등이 한 번도 나오지 않는 비율을 이항분포의 이론값과 비교합니다. | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/No1Joon/oh-my-notebooks/blob/main/notebooks/lotto_645_sampling.ipynb) |
 | [LLM재킹 탐지 규칙 시뮬레이션](notebooks/llmjacking_detection.ipynb) | 합성 로그로 탐지 지연과 오탐을 비교합니다. | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/No1Joon/oh-my-notebooks/blob/main/notebooks/llmjacking_detection.ipynb) |
 | [Claude Haiku 5.5 effort 단계별 정답률, 토큰, 요금](notebooks/haiku_effort.ipynb) | 한국어 분류·계산·코딩 과제 40개로 다섯 effort 단계의 정답률, 토큰 사용량, 응답 시간과 요금을 비교합니다. | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/No1Joon/oh-my-notebooks/blob/main/notebooks/haiku_effort.ipynb) |
 | [GitHub Ref-CAS 시뮬레이션, 참조를 어디에 두면 push 가 빨라지나](notebooks/git_ref_cas.ipynb) | 단일 blob, 분할 blob, Ref-CAS에 같은 push 부하를 주고 확정 처리량, 읽기 지연, 공유 브랜치의 재시도를 비교합니다. | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/No1Joon/oh-my-notebooks/blob/main/notebooks/git_ref_cas.ipynb) |
